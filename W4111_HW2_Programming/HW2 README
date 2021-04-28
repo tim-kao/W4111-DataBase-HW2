@@ -1,0 +1,135 @@
+HW2 README
+COMS W4111
+
+shuoting, Kao
+sk4920
+
+This project contains the following files:
+
+README.md
+
+CSVCatalog.py
+CSVTable.py
+DataTableExceptions.py
+
+unit_test_catalog.py: The test file provided and any additional tests your write.
+unit_test_catalog.txt: A file containing the execution of your tests.
+unit_test_csv_table.py: A test file provided and any additional tests you write.
+unit_test_csv_table.txt: A file containing the execution of your tests.
+
+People.csv
+Appearances.csv
+Batting.csv
+
+create.sql: SQL statements to create tables and constraints for the catalog.
+
+CSVCatalog: Creates the methods that interact with the SQL database to store the metadata tables
+This ensures table integrity is kept using MySQL rather than implementing integrity constraints ourselves. 
+
+Note: The create statements provided in create.sql must be run before executing CSVCatalog to ensure metadata tables are created correctly.
+
+In CSVCatalog there are 4 classes created: ColumnDefinition, IndexDefinition, TableDefinition, and CSVCatalog.
+CSV Catalog is the class the creates, drops, and loads a table.
+A table definition is defined by file name and columns and indexes on those columns. These are created and column and index objects in ColumnDefiniton and IndexDefiniton.
+
+CSVTable is the file that loads the metadata and csvfiles for specific tables. It is where the joins are created and acts more like a traditional MySQL workbench where you can access rows of data based off certain fields and join tables together. Find by template both via an index and a table scan has been implemented as well. 
+
+DataTableExceptions is a given file that raises specific exceptions.
+
+There are four test files, one testing and one containing the results of the tests for both the CSVTable and CSVCatalog. 
+
+The data attached which was used in testing are People.csv, Appearances.csv, and Batting.csv.
+The indexes you should define and test (at a minimum) are:
+	People: playerID as PK people
+			nameLast, nameFirst as last_first
+
+	Batting: playerID, stint, yearID as PK batting
+			 yearID as yearID
+
+	Appearances: yearID, teamID, playerID as PK appearances
+
+One of the methods in unit_test_csv_table.py will create the indexes mentioned above. To add additional indexes follow the same method. 
+
+Note all test only on three tables: People, Appearances, and Batting. These csv files can be found in this zip as well.
+
+Finally this folder contains the create.sql file which will create the metadata schema required for running CSVCatalog as mentioned previously.
+Please run this file first as the metadata tables must be created properly before anything else will work.
+
+Put any information you would like us to read below this line.
+You should include any helper methods you added, additional tests your ran, additional features, and any issues/errors.
+_________________________________________________________________________________
+● CSVCatalog
+Completed tests
+● drop_table_test()
+● add_column_test()
+● add_index_test()
+● col_drop_test()
+● index_drop_test()
+● create_table_test()
+● column_name_failure_test()
+● column_type_failure_test()
+● column_not_null_failure_test()
+● describe_table_test()
+
+● CSVTable
+Implemented functions
+1. __find_by_template_index__, a function to find associated row with template. In the function, it is optimized to find by key if applicable.
+    Three helper methods are described in the following.
+    a. __get_access_path__(self, fields)
+        i. Figures out if there is an index that can be used
+        ii. If multiple indexes can be used , selects the most selective index
+    b. __find_by_template_scan__(self, t, fields=None)
+        i. If there are no applicable indexes, just scans through all the rows
+    c. __find_by_template_index__(self, t, idx_name, fields=None)
+        i. Uses the best index to find rows that match the template.
+2. __smart_join__() performs a join of the table (self) with the input table. Smart join has two major optimizations fastening the joining speed.
+        Two optimizations implemented
+        1. Apply where template first if applicable
+        2. Swap the tables if L has an index and R one does not have an index.
+           Logic:
+              - Based on the JOIN fields.
+              - Find the best index on L and its selectivity.
+              - Find the best index on R and its selectivity.
+              - And swap the tables if L's index is better than R's one.
+3. __compute_key__() computes a composite key from a table and index_name for __find_by_template_index__, concatenating with "_"
+
+Completed tests
+● update_people_columns()
+    Populate column definition into table people.
+● update_appearances_columns()
+    Populate column definition into table appearances.
+● update_batting_columns()
+    Populate column definition into table batting.
+● add_index_definitions()
+    Populate essential index definition into table people, batting, and appearances.
+● add_other_indexes()
+    Populate index definition into table people, batting, and appearances.
+● sub_where_template_test()
+    Get rows associated with a template
+● test_find_by_template_index()
+    Get rows associated with a template by template's index
+● smart_join_test()
+    Perform join with two optimization, applying where clause and the most selective index on probe table, which is swapped with scan table if necessary.
+● Any methods you might make to do the join comparison test specified in the notebook
+
+The tests you must execute are:
+● create_lahman_tables()
+    create table people, batting, and appearances for later use.
+● test_load_info()
+    Load core definition and print file name.
+● test_get_col_names()
+    Load table people and print
+● load_test()
+    Load batting_table and print it.
+● dumb_join_test()
+    Join without optimization.
+
+Data structure description:
+self.__rows__, all rows of data.
+self.__description__, a table in dictionary form.
+                        {"table_name": "people",
+                          "path": "NewPeople.csv",
+                          "columns": [....]}
+self.__description__.indexes, a list of CSVCatalog.IndexDefinition of a table.
+                              each IndexDefinition has 3 instance variables = "index_name", "type", and "column_names"(associated columns with the index_name)
+self.__indexes__, a dictionary of dictionary. self.__indexes__[index_name][key_string] returns all rows that have the key value.
